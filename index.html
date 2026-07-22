@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bunmi Digital CBT</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --accent-color: #00ff41; /* Matrix Green */
+            --card-bg: #111111;
+            --error-color: #ff3333;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 2px solid var(--accent-color);
+            padding: 20px;
+            box-shadow: 0 0 20px var(--accent-color);
+            background-color: #050505;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: var(--accent-color);
+            margin-top: 0;
+        }
+
+        .screen {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 16px;
+            border: 1px solid var(--accent-color);
+            background: #000;
+            color: #fff;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #fff;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #fff;
+            color: #000;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 24px;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 20px;
+            border: 1px dashed var(--accent-color);
+            padding: 10px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            margin-bottom: 20px;            color: #fff;
+        }
+
+        .option-btn {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+
+        .option-btn:hover {
+            border-color: var(--accent-color);
+            background: #333;
+        }
+
+        .result-box {
+            background: var(--card-bg);
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .leaderboard {
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #1a1a1a;
+            margin-bottom: 5px;
+            border: 1px solid #333;
+        }
+
+        .correct-answer {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .wrong-answer {
+            color: var(--error-color);
+            text-decoration: line-through;
+        }
+
+        .info-text {
+            font-size: 12px;            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Bunmi Digital CBT</h1>
+        <p class="info-text">System Online. Access Required.</p>
+
+        <!-- LOGIN SCREEN -->
+        <div id="login-screen" class="screen active">
+            <h2>Access Portal</h2>
+            <input type="text" id="student-name" placeholder="Enter Full Name">
+            <input type="password" id="access-code" placeholder="Enter Access Code">
+            <button onclick="startExam()">Initialize Exam</button>
+            <p class="info-text">Hint: Code is BUNMI2026</p>
+        </div>
+
+        <!-- QUIZ SCREEN -->
+        <div id="quiz-screen" class="screen">
+            <div class="timer" id="timer">10:00</div>
+            <div id="question-container">
+                <h2 id="question-number">Question 1</h2>
+                <p id="question-text" class="question-text">Loading...</p>
+                <div id="options-container"></div>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen" class="screen">
+            <h2>Exam Complete</h2>
+            <div class="result-box">
+                <p>Student: <strong id="res-name"></strong></p>
+                <p>Score: <strong id="res-score"></strong> / 20</p>
+                <p>Percentage: <strong id="res-percent"></strong>%</p>
+            </div>
+
+            <h3>Review Answers</h3>
+            <div id="review-container"></div>
+
+            <div class="leaderboard">
+                <h3>Class Leaderboard (Recent)</h3>
+                <div id="leaderboard-list"></div>
+            </div>
+            
+            <button onclick="location.reload()">Restart System</button>
+        </div>
+    </div>
+    <script>
+        // --- CONFIGURATION ---
+        const ACCESS_CODE = "BUNMI2026";
+        const TIME_LIMIT = 600; // 10 minutes in seconds
+
+        // --- QUESTIONS DATABASE (20 Questions based on your training) ---
+        const questions = [
+            { q: "What is the core engine of a Digital Business?", o: ["Physical shops", "Value Exchange via Internet", "Selling time only", "Government grants"], a: 1 },
+            { q: "Which of these is NOT one of the 3 ways to bring money online?", o: ["Save Time", "Make Money", "Entertain/Educate", "Sleep Passively"], a: 3 },
+            { q: "What is the biggest myth about online income?", o: ["It requires consistency", "It requires skills", "You need millions to start", "It solves problems"], a: 2 },
+            { q: "Which is a major Online Business Model?", o: ["Selling Services", "Selling Products", "Selling Attention", "All of the above"], a: 3 },
+            { q: "Which skill is in HIGH demand for beginners?", o: ["Rocket Science", "Video Editing", "Brain Surgery", "Astrophysics"], a: 1 },
+            { q: "What does Digital Marketing primarily do?", o: ["Creates products", "Connects business to customers", "Writes code", "Delivers packages"], a: 1 },
+            { q: "How do Social Media platforms make money?", o: ["Charging users fees", "Selling user attention/data to ads", "Donations", "Government funding"], a: 1 },
+            { q: "What is the Positioning Formula?", o: ["I help X achieve Y", "I am the best", "Buy my stuff", "Follow me"], a: 0 },
+            { q: "Which tool is best for quick graphic design?", o: ["Photoshop", "Canva", "Excel", "Notepad"], a: 1 },
+            { q: "What is Adsterra used for?", o: ["Video Editing", "Monetizing Blogs with Ads", "Writing Code", "Sending Emails"], a: 1 },
+            { q: "What is 'Organic Reach'?", o: ["Paid Ads", "Free visibility via content", "Spamming", "Hacking"], a: 1 },
+            { q: "Which platform is best for long-form searchable content?", o: ["TikTok", "YouTube", "Snapchat", "Twitter"], a: 1 },
+            { q: "What is the key to success vs failure online?", o: ["Luck", "Consistency", "Magic", "Rich parents"], a: 1 },
+            { q: "What is a 'Pillar Article' in blogging?", o: ["A short post", "A detailed, helpful guide", "A picture", "A comment"], a: 1 },
+            { q: "How do you monetize a hobby like baking online?", o: ["Sell recipes/courses", "You can't", "Wait for lottery", "Beg"], a: 0 },
+            { q: "What is the 'Attention Economy'?", o: ["Stock market", "Attention is the new currency", "Eye surgery", "Glasses sales"], a: 1 },
+            { q: "Which is a free way to find customers?", o: ["Strategic Commenting", "Super Bowl Ads", "Billboards", "TV Commercials"], a: 0 },
+            { q: "What is the first step to start today?", o: ["Wait for tomorrow", "Update Bio & Create Link", "Buy a laptop", "Quit job"], a: 1 },
+            { q: "What does SEO stand for in blogging?", o: ["Search Engine Optimization", "Simple Easy Online", "Site Entry Operation", "Sale Every Order"], a: 0 },
+            { q: "What is the mindset for Day 11 and beyond?", o: ["Give up", "Expect rejection and keep going", "Expect millions instantly", "Do nothing"], a: 1 }
+        ];
+
+        // --- STATE VARIABLES ---
+        let currentQuestion = 0;
+        let score = 0;
+        let timerInterval;
+        let timeLeft = TIME_LIMIT;
+        let studentName = "";
+
+        // --- FUNCTIONS ---
+
+        function startExam() {
+            const name = document.getElementById('student-name').value.trim();
+            const code = document.getElementById('access-code').value.trim();
+
+            if (!name) { alert("Error: Name Required"); return; }
+            if (code !== ACCESS_CODE) { alert("Access Denied: Invalid Code"); return; }
+
+            studentName = name;
+            document.getElementById('login-screen').classList.remove('active');
+            document.getElementById('quiz-screen').classList.add('active');
+                        loadQuestion();
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                document.getElementById('timer').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                finishExam();
+                return;
+            }
+
+            const qData = questions[currentQuestion];
+            document.getElementById('question-number').innerText = `Question ${currentQuestion + 1} of ${questions.length}`;
+            document.getElementById('question-text').innerText = qData.q;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            qData.o.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = option;
+                btn.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(selectedIndex) {
+            const correctIndex = questions[currentQuestion].a;
+            if (selectedIndex === correctIndex) {
+                score++;
+            }
+            currentQuestion++;
+            loadQuestion();
+        }
+
+        function finishExam() {            clearInterval(timerInterval);
+            document.getElementById('quiz-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+
+            // Display Results
+            document.getElementById('res-name').innerText = studentName;
+            document.getElementById('res-score').innerText = score;
+            document.getElementById('res-percent').innerText = ((score / questions.length) * 100).toFixed(1);
+
+            // Save to LocalStorage (Leaderboard)
+            saveScore(studentName, score);
+            renderLeaderboard();
+            renderReview();
+        }
+
+        function saveScore(name, finalScore) {
+            let scores = JSON.parse(localStorage.getItem('bunmi_cbt_scores') || '[]');
+            scores.unshift({ name: name, score: finalScore, date: new Date().toLocaleDateString() });
+            // Keep only last 10 entries to prevent clutter
+            if (scores.length > 10) scores.pop(); 
+            localStorage.setItem('bunmi_cbt_scores', JSON.stringify(scores));
+        }
+
+        function renderLeaderboard() {
+            const scores = JSON.parse(localStorage.getItem('bunmi_cbt_scores') || '[]');
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+
+            if (scores.length === 0) {
+                list.innerHTML = '<p class="info-text">No records yet.</p>';
+                return;
+            }
+
+            scores.forEach(entry => {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-entry';
+                div.innerHTML = `<span>${entry.name}</span> <span style="color:var(--accent-color)">${entry.score}/20</span>`;
+                list.appendChild(div);
+            });
+        }
+
+        function renderReview() {
+            const container = document.getElementById('review-container');
+            container.innerHTML = '';
+            
+            questions.forEach((q, index) => {
+                const div = document.createElement('div');
+                div.className = 'result-box';
+                div.innerHTML = `
+                    <strong>Q${index+1}: ${q.q}</strong><br>                    <span class="correct-answer">Correct: ${q.o[q.a]}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+    </script>
+</body>
+</html>
